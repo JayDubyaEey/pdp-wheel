@@ -178,3 +178,10 @@ function exportAsJPEG() {
   };
   image.src = imageData;
 }
+
+document
+  .querySelector(".btn.btn-success")
+  .addEventListener("click", function () {
+    const wheelPanel = document.getElementById("wheel-pannel");
+    wheelPanel.classList.toggle("d-none");
+  });
