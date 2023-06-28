@@ -28,10 +28,10 @@ document.getElementById("form").addEventListener("submit", function (event) {
     data.push({ subject, value: +value });
   }
 
-  const width = 1200;
-  const height = 1200;
-  const innerRadius = 10;
-  const outerRadius = Math.min(width, height) / 3;
+  const width = 1400;
+  const height = 1400;
+  const innerRadius = 40;
+  const outerRadius = Math.min(width, height) / 6;
   const fullCircle = 2 * Math.PI;
 
   d3.select("#pie-chart").html("");
@@ -62,13 +62,24 @@ document.getElementById("form").addEventListener("submit", function (event) {
     .padAngle(0.01)
     .padRadius(innerRadius);
 
+  // svg
+  //   .selectAll("path")
+  //   .data(data)
+  //   .enter()
+  //   .append("path")
+  //   .attr("d", arc)
+  //   .attr("fill", (d, i) => color(i));
+
   svg
     .selectAll("path")
     .data(data)
     .enter()
     .append("path")
     .attr("d", arc)
-    .attr("fill", (d, i) => color(i));
+    .attr("fill", (d, i) => {
+      const color = d3.schemeCategory10[i % 10];
+      return color === "#ffffff" ? d3.schemeCategory10[(i + 1) % 10] : color;
+    });
 
   const ticks = svg
     .append("g")
@@ -140,3 +151,30 @@ document.getElementById("form").addEventListener("submit", function (event) {
     .attr("dy", ".35em")
     .text((d) => d.subject);
 });
+
+function exportAsJPEG() {
+  const svgElement = document.getElementById("pie-chart");
+  const svgData = new XMLSerializer().serializeToString(svgElement);
+  const svgBase64 = btoa(svgData);
+  const imageData = `data:image/svg+xml;base64,${svgBase64}`;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = svgElement.clientWidth;
+  canvas.height = svgElement.clientHeight;
+  const ctx = canvas.getContext("2d");
+
+  ctx.fillStyle = "#ffffff"; // Set canvas background color to white
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  const image = new Image();
+  image.onload = function () {
+    ctx.drawImage(image, 0, 0);
+    canvas.toBlob(function (blob) {
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "wheel_" + Date.now() + ".jpg";
+      link.click();
+    }, "image/jpeg");
+  };
+  image.src = imageData;
+}

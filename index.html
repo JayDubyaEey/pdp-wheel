@@ -39,7 +39,7 @@
 
 
         <div
-            class="container">
+            class="container-fluid">
             <!-- <div class="row mt-4"> -->
             <form id="form">
                 <div class="card text-center mt-4">
@@ -66,8 +66,17 @@
                     </div>
                 </div>
             </form>
-
-            <svg id="pie-chart" width="1200" height="1200"></svg>
+            <div class="card text-center mt-4 mb-4">
+                <div class="card-header">
+                    Wheel
+                </div>
+                <div class="card-body">
+                    <svg id="pie-chart" width="auto" height="auto"></svg>
+                </div>
+                <div class="card-footer text-body-secondary py-3 d-flex justify-content-end">
+                    <button type="button" onclick="exportAsJPEG()" class="btn btn-primary">Export as JPEG</button>
+                </div>
+            </div>
         </div>
         <script src="script.js"></script>
 
