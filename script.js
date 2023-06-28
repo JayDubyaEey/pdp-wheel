@@ -62,14 +62,6 @@ document.getElementById("form").addEventListener("submit", function (event) {
     .padAngle(0.01)
     .padRadius(innerRadius);
 
-  // svg
-  //   .selectAll("path")
-  //   .data(data)
-  //   .enter()
-  //   .append("path")
-  //   .attr("d", arc)
-  //   .attr("fill", (d, i) => color(i));
-
   svg
     .selectAll("path")
     .data(data)
