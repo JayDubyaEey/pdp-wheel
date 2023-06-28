@@ -6,13 +6,21 @@ function addField() {
     const inputFields = document.getElementById("input-fields");
     const newField = document.createElement("div");
     newField.classList.add("row", "g-3", "my-2");
+    newField.setAttribute("id", `row-${fieldCount}`);
     newField.innerHTML = `
-      <div class="col-10">
-        <input type="text" class="form-control" id="statement-${fieldCount}" name="statement-${fieldCount}" placeholder="Statement" aria-label="Statement">
-      </div>
-      <div class="col-2">
-        <input type="number" class="form-control" id="score-${fieldCount}" name="score-${fieldCount}" min="1" max="10" placeholder="1" aria-label="Score">
-      </div>
+
+    <div class="col-auto">
+      <button type="button" onclick="deleteField(${fieldCount})" class="btn btn-danger">
+        <i class="bi bi-x-circle"></i>
+      </button>
+    </div>
+    <div class="col">
+      <input type="text" class="form-control" id="statement-${fieldCount}" name="statement-${fieldCount}" placeholder="Statement" aria-label="Statement">
+    </div>
+      <div class="col-auto">
+      <input type="number" class="form-control" id="score-${fieldCount}" name="score-${fieldCount}" min="1" max="10" placeholder="1" aria-label="Score">
+    </div>
+
     `;
     inputFields.appendChild(newField);
   }
@@ -177,3 +185,13 @@ document
     const wheelPanel = document.getElementById("wheel-pannel");
     wheelPanel.classList.toggle("d-none");
   });
+
+function deleteField(event) {
+  const row = event.target.closest(".row");
+  row.remove();
+}
+
+function deleteField(fieldIndex) {
+  const field = document.getElementById(`row-${fieldIndex}`);
+  field.remove();
+}
