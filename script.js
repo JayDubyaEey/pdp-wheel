@@ -9,7 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function addField() {
-  if (fieldCount < 11) {
+  if (fieldCount <= 10) {
     fieldCount++;
 
     let rng = generateRandomString();
@@ -19,22 +19,25 @@ function addField() {
     newField.classList.add("row", "g-3", "mb-2");
     newField.setAttribute("id", `row-${rng}`);
     newField.innerHTML = `
+    <div class="col-auto">
+      <button type="button" onclick="deleteField('${rng}')" class="btn btn-danger">
+        <i class="bi bi-trash3"></i>
+      </button>
+    </div>
       <div class="col">
-        <input type="text" class="form-control" id="statement-${rng}" name="statement-${rng}" aria-label="Statement">
+        <input type="text" class="form-control" id="statement-${rng}" name="statement-${rng}" placeholder="Write your statement" aria-label="Statement" required>
       </div>
-      <div class="col-auto">
-        <input type="number" class="form-control" id="score-${rng}" name="score-${rng}" min="1" max="10" placeholder="0" aria-label="Score">
+      <div class="col-2">
+        <input type="number" class="form-control" id="current-score-${rng}" name="current-score-${rng}" min="1" max="10" placeholder="Current score (1-10)" aria-label="current-score" required>
+      </div>
+      <div class="col-2">
+        <input type="number" class="form-control" id="target-score-${rng}" name="target-score-${rng}" min="1" max="10" placeholder="Target score (1-10)" aria-label="target-score" required>
       </div>
       <div class="col-auto d-flex align-items-center">
         <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" role="switch" id="high-impact-${rng}">
-          <label class="form-check-label" for="high-impact-${rng}">High Impact</label>
+        <input class="form-check-input" type="checkbox" role="switch" id="high-impact-${rng}">
+        <label class="form-check-label mr-2" for="high-impact-${rng}">High Impact</label>
         </div>
-      </div>
-      <div class="col-auto">
-        <button type="button" onclick="deleteField('${rng}')" class="btn btn-danger">
-          <i class="bi bi-trash3"></i>
-        </button>
       </div>
     `;
 
@@ -75,18 +78,24 @@ document.getElementById("form").addEventListener("submit", function (event) {
 
   for (let i = 0; i < rowIds.length; i++) {
     const rowId = rowIds[i];
-    const subject = document.getElementById(`statement-${rowId}`).value;
-    const value = document.getElementById(`score-${rowId}`).value;
+    const statement = document.getElementById(`statement-${rowId}`).value;
+    const currentScore = document.getElementById(
+      `current-score-${rowId}`
+    ).value;
+    const targetScore = document.getElementById(`target-score-${rowId}`).value;
     const important = document.getElementById(`high-impact-${rowId}`).checked;
-    data.push({ subject, value: +value, important: important });
+    data.push({
+      statement,
+      currentScore: +currentScore,
+      targetScore: +targetScore,
+      important: important,
+    });
   }
-
-  console.log(data);
 
   const width = 1400;
   const height = 1400;
-  const innerRadius = 40;
-  const outerRadius = Math.min(width, height) / 6;
+  const innerRadius = 30;
+  const outerRadius = Math.min(width, height) / 5;
   const fullCircle = 2 * Math.PI;
 
   d3.select("#pie-chart").html("");
@@ -104,24 +113,43 @@ document.getElementById("form").addEventListener("submit", function (event) {
     .scaleBand()
     .range([0, fullCircle])
     .align(0)
-    .domain(data.map((d) => d.subject));
+    .domain(data.map((d) => d.statement));
 
   const y = d3.scaleLinear().range([innerRadius, outerRadius]).domain([0, 10]);
 
-  const arc = d3
+  const arcTarget = d3
     .arc()
     .innerRadius((d) => y(0))
-    .outerRadius((d) => y(d.value))
-    .startAngle((d) => x(d.subject))
-    .endAngle((d) => x(d.subject) + x.bandwidth())
+    .outerRadius((d) => y(d.targetScore))
+    .startAngle((d) => x(d.statement))
+    .endAngle((d) => x(d.statement) + x.bandwidth())
     .padAngle(0.01)
     .padRadius(innerRadius);
 
   svg
-    .selectAll("path")
+    .selectAll(".pathTarget")
     .data(data)
     .enter()
     .append("path")
+    .attr("class", "pathTarget")
+    .attr("d", arcTarget)
+    .attr("fill", "#b8b8b8");
+
+  const arc = d3
+    .arc()
+    .innerRadius((d) => y(0))
+    .outerRadius((d) => y(d.currentScore))
+    .startAngle((d) => x(d.statement))
+    .endAngle((d) => x(d.statement) + x.bandwidth())
+    .padAngle(0.01)
+    .padRadius(innerRadius);
+
+  svg
+    .selectAll(".pathCurrent")
+    .data(data)
+    .enter()
+    .append("path")
+    .attr("class", "pathCurrent")
     .attr("d", arc)
     .attr("fill", (d, i) => {
       return d.important ? "#d9534e" : "#4582ec";
@@ -150,8 +178,8 @@ document.getElementById("form").addEventListener("submit", function (event) {
     .arc()
     .innerRadius(outerRadius + 50)
     .outerRadius(outerRadius + 50)
-    .startAngle((d) => x(d.subject))
-    .endAngle((d) => x(d.subject) + x.bandwidth());
+    .startAngle((d) => x(d.statement))
+    .endAngle((d) => x(d.statement) + x.bandwidth());
 
   const labels = svg.selectAll(".label").data(data).enter().append("g");
 
@@ -175,7 +203,8 @@ document.getElementById("form").addEventListener("submit", function (event) {
   labels
     .append("rect")
     .attr("x", function (d) {
-      const midpoint_angle = (x(d.subject) + x(d.subject) + x.bandwidth()) / 2;
+      const midpoint_angle =
+        (x(d.statement) + x(d.statement) + x.bandwidth()) / 2;
       return midpoint_angle > Math.PI
         ? labelArc.centroid(d)[0]
         : labelArc.centroid(d)[0] - 50;
@@ -191,11 +220,38 @@ document.getElementById("form").addEventListener("submit", function (event) {
     .append("text")
     .attr("transform", (d) => `translate(${labelArc.centroid(d)})`)
     .attr("text-anchor", function (d) {
-      const midpoint_angle = (x(d.subject) + x(d.subject) + x.bandwidth()) / 2;
+      const midpoint_angle =
+        (x(d.statement) + x(d.statement) + x.bandwidth()) / 2;
       return midpoint_angle > Math.PI ? "end" : "start";
     })
     .attr("dy", ".35em")
-    .text((d) => d.subject);
+    .text((d) => d.statement);
+
+  labels
+    .append("circle")
+    .attr("cx", function (d) {
+      return arc.centroid(d)[0];
+    })
+    .attr("cy", function (d) {
+      return arc.centroid(d)[1];
+    })
+    .attr("r", 15)
+    .style("fill", "#fff")
+    .style("stroke", "#000")
+    .style("stroke-width", "1");
+
+  labels
+    .append("text")
+    .attr("x", function (d) {
+      return arc.centroid(d)[0];
+    })
+    .attr("y", function (d) {
+      return arc.centroid(d)[1];
+    })
+    .text((d) => d.currentScore)
+    .style("text-anchor", "middle")
+    .style("alignment-baseline", "middle")
+    .style("fill", "#000");
 });
 
 function exportAsJPEG() {
@@ -230,8 +286,6 @@ const button = document.querySelector(".btn.btn-success");
 function toggleWheelPanel() {
   const wheelPanel = document.getElementById("wheel-pannel");
   wheelPanel.classList.toggle("d-none");
-
-  // Remove the event listener after it has been triggered
   button.removeEventListener("click", toggleWheelPanel);
 }
 
