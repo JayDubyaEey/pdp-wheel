@@ -1,40 +1,87 @@
 let fieldCount = 1;
 
+document.addEventListener("DOMContentLoaded", () => {
+  const numberOfFields = 3;
+
+  for (let i = 0; i < numberOfFields; i++) {
+    addField();
+  }
+});
+
 function addField() {
-  if (fieldCount < 10) {
+  if (fieldCount < 11) {
     fieldCount++;
+
+    let rng = generateRandomString();
+
     const inputFields = document.getElementById("input-fields");
     const newField = document.createElement("div");
-    newField.classList.add("row", "g-3", "my-2");
-    newField.setAttribute("id", `row-${fieldCount}`);
+    newField.classList.add("row", "g-3", "mb-2");
+    newField.setAttribute("id", `row-${rng}`);
     newField.innerHTML = `
-
-    <div class="col-auto">
-      <button type="button" onclick="deleteField(${fieldCount})" class="btn btn-danger">
-        <i class="bi bi-x-circle"></i>
-      </button>
-    </div>
-    <div class="col">
-      <input type="text" class="form-control" id="statement-${fieldCount}" name="statement-${fieldCount}" placeholder="Statement" aria-label="Statement">
-    </div>
+      <div class="col">
+        <input type="text" class="form-control" id="statement-${rng}" name="statement-${rng}" aria-label="Statement">
+      </div>
       <div class="col-auto">
-      <input type="number" class="form-control" id="score-${fieldCount}" name="score-${fieldCount}" min="1" max="10" placeholder="1" aria-label="Score">
-    </div>
-
+        <input type="number" class="form-control" id="score-${rng}" name="score-${rng}" min="1" max="10" placeholder="0" aria-label="Score">
+      </div>
+      <div class="col-auto d-flex align-items-center">
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" role="switch" id="high-impact-${rng}">
+          <label class="form-check-label" for="high-impact-${rng}">High Impact</label>
+        </div>
+      </div>
+      <div class="col-auto">
+        <button type="button" onclick="deleteField('${rng}')" class="btn btn-danger">
+          <i class="bi bi-trash3"></i>
+        </button>
+      </div>
     `;
+
     inputFields.appendChild(newField);
   }
+}
+
+function deleteField(fieldIndex) {
+  const field = document.getElementById(`row-${fieldIndex}`);
+
+  field.remove();
+
+  fieldCount--;
+}
+
+function generateRandomString() {
+  const characters =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+  let result = "";
+
+  for (let i = 0; i < 5; i++) {
+    const randomIndex = Math.floor(Math.random() * characters.length);
+    result += characters.charAt(randomIndex);
+  }
+
+  return result;
 }
 
 document.getElementById("form").addEventListener("submit", function (event) {
   event.preventDefault();
 
   const data = [];
-  for (let i = 1; i <= fieldCount; i++) {
-    const subject = document.getElementById(`statement-${i}`).value;
-    const value = document.getElementById(`score-${i}`).value;
-    data.push({ subject, value: +value });
+
+  const rowIds = Array.from(
+    document.querySelectorAll('[id^="statement-"]')
+  ).map((element) => element.id.split("-")[1]);
+
+  for (let i = 0; i < rowIds.length; i++) {
+    const rowId = rowIds[i];
+    const subject = document.getElementById(`statement-${rowId}`).value;
+    const value = document.getElementById(`score-${rowId}`).value;
+    const important = document.getElementById(`high-impact-${rowId}`).checked;
+    data.push({ subject, value: +value, important: important });
   }
+
+  console.log(data);
 
   const width = 1400;
   const height = 1400;
@@ -77,8 +124,7 @@ document.getElementById("form").addEventListener("submit", function (event) {
     .append("path")
     .attr("d", arc)
     .attr("fill", (d, i) => {
-      const color = d3.schemeCategory10[i % 10];
-      return color === "#ffffff" ? d3.schemeCategory10[(i + 1) % 10] : color;
+      return d.important ? "#d9534e" : "#4582ec";
     });
 
   const ticks = svg
@@ -163,7 +209,7 @@ function exportAsJPEG() {
   canvas.height = svgElement.clientHeight;
   const ctx = canvas.getContext("2d");
 
-  ctx.fillStyle = "#ffffff"; // Set canvas background color to white
+  ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   const image = new Image();
@@ -179,19 +225,14 @@ function exportAsJPEG() {
   image.src = imageData;
 }
 
-document
-  .querySelector(".btn.btn-success")
-  .addEventListener("click", function () {
-    const wheelPanel = document.getElementById("wheel-pannel");
-    wheelPanel.classList.toggle("d-none");
-  });
+const button = document.querySelector(".btn.btn-success");
 
-function deleteField(event) {
-  const row = event.target.closest(".row");
-  row.remove();
+function toggleWheelPanel() {
+  const wheelPanel = document.getElementById("wheel-pannel");
+  wheelPanel.classList.toggle("d-none");
+
+  // Remove the event listener after it has been triggered
+  button.removeEventListener("click", toggleWheelPanel);
 }
 
-function deleteField(fieldIndex) {
-  const field = document.getElementById(`row-${fieldIndex}`);
-  field.remove();
-}
+button.addEventListener("click", toggleWheelPanel);
